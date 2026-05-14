@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HR Admin Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --green:#00B900;--green-dark:#008f00;
+      --red:#ef4444;--orange:#f59e0b;--blue:#3b82f6;
+      --bg:#f0fdf4;--card:#fff;--text:#1a1a1a;--muted:#6b7280;
+      --border:#e5e7eb;
+    }
+    body{font-family:'Sarabun',sans-serif;background:var(--bg);min-height:100vh;color:var(--text)}
+
+    /* LOGIN */
+    #loginScreen{
+      min-height:100vh;display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(135deg,#00B900,#008f00);
+    }
+    .login-box{
+      background:#fff;border-radius:24px;padding:40px 32px;
+      width:100%;max-width:360px;text-align:center;
+      box-shadow:0 20px 60px rgba(0,0,0,0.2);
+    }
+    .login-logo{font-size:48px;margin-bottom:12px}
+    .login-title{font-size:22px;font-weight:800;margin-bottom:4px}
+    .login-sub{font-size:14px;color:var(--muted);margin-bottom:28px}
+    .input-group{margin-bottom:14px;text-align:left}
+    .input-group label{font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px}
+    .input-group input{
+      width:100%;padding:12px 16px;border:2px solid var(--border);
+      border-radius:12px;font-size:15px;font-family:'Sarabun',sans-serif;
+      transition:border-color 0.2s;outline:none;
+    }
+    .input-group input:focus{border-color:var(--green)}
+    .btn-login{
+      width:100%;padding:14px;background:linear-gradient(135deg,var(--green),var(--green-dark));
+      color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:800;
+      font-family:'Sarabun',sans-serif;cursor:pointer;margin-top:8px;
+      transition:opacity 0.2s;
+    }
+    .btn-login:hover{opacity:0.9}
+    .login-error{color:var(--red);font-size:13px;margin-top:8px;display:none}
+
+    /* MAIN */
+    #mainScreen{display:none}
+    .topbar{
+      background:#fff;padding:16px 24px;
+      display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid var(--border);
+      box-shadow:0 2px 8px rgba(0,0,0,0.05);
+      position:sticky;top:0;z-index:10;
+    }
+    .topbar-left{display:flex;align-items:center;gap:12px}
+    .topbar-logo{
+      width:36px;height:36px;border-radius:10px;
+      background:linear-gradient(135deg,var(--green),var(--green-dark));
+      display:flex;align-items:center;justify-content:center;
+      font-size:18px;
+    }
+    .topbar-title{font-size:16px;font-weight:800}
+    .topbar-sub{font-size:12px;color:var(--muted)}
+    .btn-logout{
+      background:none;border:1.5px solid var(--border);border-radius:8px;
+      padding:6px 14px;font-size:13px;cursor:pointer;color:var(--muted);
+      font-family:'Sarabun',sans-serif;
+    }
+
+    .content{padding:20px 24px;max-width:1100px;margin:0 auto}
+
+    /* Tabs */
+    .tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+    .tab{
+      padding:8px 18px;border-radius:20px;border:1.5px solid var(--border);
+      background:#fff;font-size:14px;font-weight:600;cursor:pointer;
+      font-family:'Sarabun',sans-serif;transition:all 0.2s;color:var(--muted);
+    }
+    .tab.active{background:var(--green);border-color:var(--green);color:#fff}
+
+    /* Stats */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+    .stat-card{
+      background:#fff;border-radius:16px;padding:16px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.06);
+      border-left:4px solid var(--green);
+    }
+    .stat-label{font-size:12px;color:var(--muted);margin-bottom:6px}
+    .stat-value{font-size:26px;font-weight:800}
+    .stat-value.green{color:var(--green)}
+    .stat-value.red{color:var(--red)}
+    .stat-value.orange{color:var(--orange)}
+    .stat-value.blue{color:var(--blue)}
+
+    /* Table */
+    .table-card{background:#fff;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);overflow:hidden;margin-bottom:20px}
+    .table-header{
+      padding:16px 20px;display:flex;align-items:center;
+      justify-content:space-between;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px;
+    }
+    .table-title{font-size:15px;font-weight:800}
+    .date-filter{
+      display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    }
+    .date-filter input{
+      padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;
+      font-size:13px;font-family:'Sarabun',sans-serif;outline:none;
+    }
+    .date-filter input:focus{border-color:var(--green)}
+    .btn-filter{
+      padding:7px 16px;background:var(--green);color:#fff;border:none;
+      border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;
+      font-family:'Sarabun',sans-serif;
+    }
+    .btn-export{
+      padding:7px 16px;background:#fff;color:var(--green);
+      border:1.5px solid var(--green);border-radius:8px;font-size:13px;
+      font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;
+    }
+    table{width:100%;border-collapse:collapse}
+    th{
+      background:#f9fafb;padding:12px 16px;text-align:left;
+      font-size:12px;font-weight:700;color:var(--muted);
+      border-bottom:1px solid var(--border);
+    }
+    td{padding:12px 16px;font-size:13px;border-bottom:1px solid #f3f4f6}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:#f9fafb}
+    .badge{
+      padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;
+      display:inline-block;
+    }
+    .badge-in{background:#dcfce7;color:#166534}
+    .badge-out{background:#f3f4f6;color:#374151}
+    .badge-absent{background:#fee2e2;color:#991b1b}
+    .badge-late{background:#fef9c3;color:#92400e}
+    .badge-ot{background:#dbeafe;color:#1e40af}
+
+    .loading-row td{text-align:center;padding:32px;color:var(--muted)}
+    .empty-row td{text-align:center;padding:32px;color:var(--muted)}
+
+    /* Month selector */
+    .month-selector{display:flex;align-items:center;gap:8px}
+    .month-selector select{
+      padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;
+      font-size:13px;font-family:'Sarabun',sans-serif;outline:none;
+      background:#fff;
+    }
+
+    @media(max-width:600px){
+      .content{padding:12px}
+      .stats-grid{grid-template-columns:1fr 1fr}
+      table{font-size:12px}
+      th,td{padding:8px 10px}
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">🔐</div>
+    <div class="login-title">HR Admin</div>
+    <div class="login-sub">ระบบจัดการข้อมูลพนักงาน</div>
+    <div class="input-group">
+      <label>ชื่อผู้ใช้</label>
+      <input type="text" id="inputUser" placeholder="admin" value="admin"/>
+    </div>
+    <div class="input-group">
+      <label>รหัสผ่าน</label>
+      <input type="password" id="inputPass" placeholder="รหัสผ่าน" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="btn-login" onclick="doLogin()">เข้าสู่ระบบ</button>
+    <div class="login-error" id="loginError">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</div>
+  </div>
+</div>
+
+<!-- MAIN DASHBOARD -->
+<div id="mainScreen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">📊</div>
+      <div>
+        <div class="topbar-title">HR Dashboard</div>
+        <div class="topbar-sub" id="topbarDate"></div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="doLogout()">ออกจากระบบ</button>
+  </div>
+
+  <div class="content">
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('today')">📅 วันนี้</button>
+      <button class="tab" onclick="switchTab('ot')">⏱️ OT รายเดือน</button>
+      <button class="tab" onclick="switchTab('absent')">⚠️ ยังไม่ Check-in</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card" style="border-left-color:var(--green)">
+        <div class="stat-label">✅ เข้างานแล้ว</div>
+        <div class="stat-value green" id="statIn">–</div>
+      </div>
+      <div class="stat-card" style="border-left-color:#9ca3af">
+        <div class="stat-label">🏠 ออกงานแล้ว</div>
+        <div class="stat-value" id="statOut" style="color:#374151">–</div>
+      </div>
+      <div class="stat-card" style="border-left-color:var(--orange)">
+        <div class="stat-label">⏱️ OT วันนี้</div>
+        <div class="stat-value orange" id="statOT">–</div>
+      </div>
+      <div class="stat-card" style="border-left-color:var(--orange)">
+        <div class="stat-label">⚠️ มาสาย</div>
+        <div class="stat-value orange" id="statLate">–</div>
+      </div>
+    </div>
+
+    <!-- TAB: TODAY -->
+    <div id="tabToday">
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">บันทึกเข้า-ออกงานวันนี้</div>
+          <div class="date-filter">
+            <input type="date" id="filterDate"/>
+            <button class="btn-filter" onclick="loadToday()">🔍 ดู</button>
+            <button class="btn-export" onclick="exportExcel('today')">📥 Excel</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>ชื่อพนักงาน</th>
+                <th>Check-in</th>
+                <th>Check-out</th>
+                <th>OT</th>
+                <th>สถานะ</th>
+              </tr>
+            </thead>
+            <tbody id="todayBody">
+              <tr class="loading-row"><td colspan="5">⏳ กำลังโหลด...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: OT MONTHLY -->
+    <div id="tabOT" style="display:none">
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">สรุป OT รายคนประจำเดือน</div>
+          <div class="date-filter">
+            <div class="month-selector">
+              <select id="filterMonth">
+                <option value="01">มกราคม</option>
+                <option value="02">กุมภาพันธ์</option>
+                <option value="03">มีนาคม</option>
+                <option value="04">เมษายน</option>
+                <option value="05" selected>พฤษภาคม</option>
+                <option value="06">มิถุนายน</option>
+                <option value="07">กรกฎาคม</option>
+                <option value="08">สิงหาคม</option>
+                <option value="09">กันยายน</option>
+                <option value="10">ตุลาคม</option>
+                <option value="11">พฤศจิกายน</option>
+                <option value="12">ธันวาคม</option>
+              </select>
+              <select id="filterYear">
+                <option value="2025">2025</option>
+                <option value="2026" selected>2026</option>
+              </select>
+              <button class="btn-filter" onclick="loadOT()">🔍 ดู</button>
+              <button class="btn-export" onclick="exportExcel('ot')">📥 Excel</button>
+            </div>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>ชื่อพนักงาน</th>
+                <th>วันทำงาน</th>
+                <th>OT รวม (ชม.)</th>
+                <th>มาสาย (วัน)</th>
+                <th>ขาดงาน (วัน)</th>
+              </tr>
+            </thead>
+            <tbody id="otBody">
+              <tr class="loading-row"><td colspan="5">⏳ กำลังโหลด...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: ABSENT -->
+    <div id="tabAbsent" style="display:none">
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">⚠️ พนักงานที่ยังไม่ได้ Check-in วันนี้</div>
+          <button class="btn-filter" onclick="loadAbsent()">🔄 รีเฟรช</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>ชื่อพนักงาน</th>
+                <th>Check-in ล่าสุด</th>
+                <th>วันที่</th>
+              </tr>
+            </thead>
+            <tbody id="absentBody">
+              <tr class="loading-row"><td colspan="3">⏳ กำลังโหลด...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ===== ตั้งค่า =====
+  const SUPABASE_URL = "https://qtcverqtuocwszhswfom.supabase.co";
+  const SUPABASE_KEY = "PASTE_YOUR_ANON_KEY_HERE"; // ← ใส่ Publishable key เดิม
+  const ADMIN_USER = "admin";
+  const ADMIN_PASS = "hr1234"; // ← เปลี่ยนรหัสผ่านได้ตรงนี้
+  // ===================
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  let currentTab = 'today';
+
+  // Login
+  function doLogin() {
+    const u = document.getElementById('inputUser').value;
+    const p = document.getElementById('inputPass').value;
+    if (u === ADMIN_USER && p === ADMIN_PASS) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainScreen').style.display = 'block';
+      initDashboard();
+    } else {
+      document.getElementById('loginError').style.display = 'block';
+    }
+  }
+
+  function doLogout() {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('mainScreen').style.display = 'none';
+  }
+
+  function initDashboard() {
+    const now = new Date();
+    const days = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัส','ศุกร์','เสาร์'];
+    const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    document.getElementById('topbarDate').textContent =
+      `วัน${days[now.getDay()]}ที่ ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()+543}`;
+    const today = now.toISOString().slice(0,10);
+    document.getElementById('filterDate').value = today;
+    loadToday();
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach((t,i) => {
+      t.classList.toggle('active', ['today','ot','absent'][i] === tab);
+    });
+    document.getElementById('tabToday').style.display = tab==='today' ? 'block' : 'none';
+    document.getElementById('tabOT').style.display = tab==='ot' ? 'block' : 'none';
+    document.getElementById('tabAbsent').style.display = tab==='absent' ? 'block' : 'none';
+    if (tab==='today') loadToday();
+    if (tab==='ot') loadOT();
+    if (tab==='absent') loadAbsent();
+  }
+
+  function formatTime(iso) {
+    if (!iso) return '–';
+    const t = new Date(iso);
+    return String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0');
+  }
+
+  function formatOTHours(minutes) {
+    if (!minutes || minutes <= 0) return '–';
+    const h = Math.floor(minutes/60);
+    const m = minutes%60;
+    return h > 0 ? `${h}:${String(m).padStart(2,'0')} ชม.` : `0:${String(m).padStart(2,'0')} ชม.`;
+  }
+
+  function isLate(isoTime) {
+    if (!isoTime) return false;
+    const t = new Date(isoTime);
+    const mins = t.getHours()*60 + t.getMinutes();
+    return mins > 8*60+15;
+  }
+
+  async function loadToday() {
+    const date = document.getElementById('filterDate').value;
+    const tbody = document.getElementById('todayBody');
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="5">⏳ กำลังโหลด...</td></tr>';
+
+    const { data, error } = await sb.from('checkins').select('*')
+      .eq('date', date).order('checkin_time', {ascending: true});
+
+    if (error || !data) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="5">เกิดข้อผิดพลาด</td></tr>';
+      return;
+    }
+
+    // Stats
+    const checkedIn = data.filter(r => r.checkin_time).length;
+    const checkedOut = data.filter(r => r.checkout_time).length;
+    const hasOT = data.filter(r => r.ot_minutes > 0).length;
+    const late = data.filter(r => isLate(r.checkin_time)).length;
+    document.getElementById('statIn').textContent = checkedIn;
+    document.getElementById('statOut').textContent = checkedOut;
+    document.getElementById('statOT').textContent = hasOT;
+    document.getElementById('statLate').textContent = late;
+
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="5">ไม่มีข้อมูลวันนี้</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.map(r => {
+      const late = isLate(r.checkin_time);
+      const hasOT = r.ot_minutes > 0;
+      let status = r.checkout_time
+        ? `<span class="badge badge-out">ออกแล้ว</span>`
+        : `<span class="badge badge-in">อยู่ในงาน</span>`;
+      if (late) status += ` <span class="badge badge-late">มาสาย</span>`;
+      if (hasOT) status += ` <span class="badge badge-ot">OT</span>`;
+      return `<tr>
+        <td><b>${r.user_name || '–'}</b></td>
+        <td>${formatTime(r.checkin_time)}</td>
+        <td>${formatTime(r.checkout_time)}</td>
+        <td>${formatOTHours(r.ot_minutes)}</td>
+        <td>${status}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  async function loadOT() {
+    const month = document.getElementById('filterMonth').value;
+    const year = document.getElementById('filterYear').value;
+    const tbody = document.getElementById('otBody');
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="5">⏳ กำลังโหลด...</td></tr>';
+
+    const startDate = `${year}-${month}-01`;
+    const endDate = `${year}-${month}-31`;
+
+    const { data, error } = await sb.from('checkins').select('*')
+      .gte('date', startDate).lte('date', endDate);
+
+    if (error || !data) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="5">เกิดข้อผิดพลาด</td></tr>';
+      return;
+    }
+
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="5">ไม่มีข้อมูลเดือนนี้</td></tr>';
+      return;
+    }
+
+    // Group by user
+    const users = {};
+    data.forEach(r => {
+      if (!users[r.user_id]) {
+        users[r.user_id] = { name: r.user_name, days: 0, otMinutes: 0, late: 0 };
+      }
+      users[r.user_id].days++;
+      users[r.user_id].otMinutes += (r.ot_minutes || 0);
+      if (isLate(r.checkin_time)) users[r.user_id].late++;
+    });
+
+    tbody.innerHTML = Object.values(users).map(u => `
+      <tr>
+        <td><b>${u.name || '–'}</b></td>
+        <td>${u.days} วัน</td>
+        <td>${formatOTHours(u.otMinutes)}</td>
+        <td>${u.late > 0 ? `<span class="badge badge-late">${u.late} วัน</span>` : '–'}</td>
+        <td>–</td>
+      </tr>
+    `).join('');
+  }
+
+  async function loadAbsent() {
+    const today = new Date().toISOString().slice(0,10);
+    const tbody = document.getElementById('absentBody');
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="3">⏳ กำลังโหลด...</td></tr>';
+
+    // คนที่ check-in วันอื่น แต่ไม่มีวันนี้
+    const { data } = await sb.from('checkins').select('*')
+      .neq('date', today)
+      .order('date', {ascending: false});
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="3">ไม่มีข้อมูล</td></tr>';
+      return;
+    }
+
+    // Get today's checkins
+    const { data: todayData } = await sb.from('checkins').select('user_id').eq('date', today);
+    const todayIds = new Set((todayData || []).map(r => r.user_id));
+
+    // Users who checked in before but not today
+    const seen = new Set();
+    const absent = [];
+    data.forEach(r => {
+      if (!todayIds.has(r.user_id) && !seen.has(r.user_id)) {
+        seen.add(r.user_id);
+        absent.push(r);
+      }
+    });
+
+    if (absent.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="3">✅ พนักงานทุกคน Check-in แล้ววันนี้</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = absent.map(r => `
+      <tr>
+        <td><b>${r.user_name || '–'}</b> <span class="badge badge-absent">ยังไม่ Check-in</span></td>
+        <td>${formatTime(r.checkin_time)}</td>
+        <td>${r.date}</td>
+      </tr>
+    `).join('');
+  }
+
+  // Export Excel (CSV)
+  function exportExcel(type) {
+    let rows = [];
+    if (type === 'today') {
+      const trs = document.querySelectorAll('#todayBody tr');
+      rows.push(['ชื่อพนักงาน','Check-in','Check-out','OT','สถานะ']);
+      trs.forEach(tr => {
+        const tds = tr.querySelectorAll('td');
+        if (tds.length >= 5) {
+          rows.push([tds[0].textContent, tds[1].textContent, tds[2].textContent,
+            tds[3].textContent, tds[4].textContent]);
+        }
+      });
+    } else {
+      const trs = document.querySelectorAll('#otBody tr');
+      rows.push(['ชื่อพนักงาน','วันทำงาน','OT รวม','มาสาย','ขาดงาน']);
+      trs.forEach(tr => {
+        const tds = tr.querySelectorAll('td');
+        if (tds.length >= 5) {
+          rows.push([tds[0].textContent, tds[1].textContent, tds[2].textContent,
+            tds[3].textContent, tds[4].textContent]);
+        }
+      });
+    }
+    const csv = '\uFEFF' + rows.map(r => r.map(c => `"${c.trim()}"`).join(',')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hr-report-${type}-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  }
+</script>
+</body>
+</html>
