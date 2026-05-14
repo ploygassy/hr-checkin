@@ -415,7 +415,7 @@
   function isLate(checkinStr) {
     const [ch, cm] = checkinStr.split(':').map(Number);
     const [sh, sm] = WORK_START.split(':').map(Number);
-    return (ch * 60 + cm) > (sh * 60 + sm);
+    return (ch * 60 + cm) > (sh * 60 + sm+15);
   }
 
   async function doCheckIn() {
