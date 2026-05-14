@@ -411,7 +411,11 @@
     const mins = diffMin % 60;
     return hrs > 0 ? `${hrs} ชม. ${mins} นาที` : `${mins} นาที`;
   }
-
+function isEarlyOT(checkinStr) {
+  const [ch, cm] = checkinStr.split(':').map(Number);
+  const [sh, sm] = WORK_START.split(':').map(Number);
+  return (ch * 60 + cm) < (sh * 60 + sm - 15);
+}
   function isLate(checkinStr) {
     const [ch, cm] = checkinStr.split(':').map(Number);
     const [sh, sm] = WORK_START.split(':').map(Number);
