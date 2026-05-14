@@ -5,36 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HR Check-in</title>
   <script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --green: #00B900;
-      --green-dark: #008f00;
-      --red: #ef4444;
-      --red-dark: #dc2626;
-      --bg: #f0f9f0;
-      --card: #ffffff;
-      --text: #1a1a1a;
-      --muted: #6b7280;
+      --green: #00B900; --green-dark: #008f00;
+      --red: #ef4444; --red-dark: #dc2626;
+      --bg: #f0f9f0; --card: #ffffff;
+      --text: #1a1a1a; --muted: #6b7280;
     }
-
     body {
       font-family: 'Sarabun', sans-serif;
       background: var(--bg);
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
       padding: 24px 16px;
     }
-
-    /* Loading screen */
-    #loading {
-      text-align: center;
-    }
+    #loading { text-align: center; }
     .spinner {
       width: 48px; height: 48px;
       border: 4px solid #e5e7eb;
@@ -44,95 +33,42 @@
       margin: 0 auto 16px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Main card */
-    #app {
-      width: 100%;
-      max-width: 380px;
-      display: none;
-      flex-direction: column;
-      gap: 16px;
-    }
-
+    #app { width: 100%; max-width: 380px; display: none; flex-direction: column; gap: 16px; }
     .header-card {
       background: linear-gradient(135deg, var(--green), var(--green-dark));
-      border-radius: 20px;
-      padding: 24px;
-      color: white;
-      text-align: center;
+      border-radius: 20px; padding: 24px;
+      color: white; text-align: center;
       box-shadow: 0 8px 32px rgba(0,185,0,0.25);
     }
-
     .avatar {
-      width: 72px; height: 72px;
-      border-radius: 50%;
+      width: 72px; height: 72px; border-radius: 50%;
       border: 3px solid rgba(255,255,255,0.5);
       margin: 0 auto 12px;
-      object-fit: cover;
       background: rgba(255,255,255,0.2);
       display: flex; align-items: center; justify-content: center;
-      font-size: 32px;
-      overflow: hidden;
+      font-size: 32px; overflow: hidden;
     }
     .avatar img { width: 100%; height: 100%; object-fit: cover; }
-
     .user-name { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
     .user-sub { font-size: 13px; opacity: 0.8; }
-
     .time-card {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 20px;
-      text-align: center;
+      background: var(--card); border-radius: 16px;
+      padding: 20px; text-align: center;
       box-shadow: 0 2px 12px rgba(0,0,0,0.06);
     }
-
-    .clock {
-      font-size: 42px;
-      font-weight: 800;
-      color: var(--text);
-      letter-spacing: -1px;
-    }
-    .date-text {
-      font-size: 14px;
-      color: var(--muted);
-      margin-top: 4px;
-    }
-
+    .clock { font-size: 42px; font-weight: 800; color: var(--text); letter-spacing: -1px; }
+    .date-text { font-size: 14px; color: var(--muted); margin-top: 4px; }
     .info-card {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 16px 20px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      background: var(--card); border-radius: 16px;
+      padding: 16px 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      display: flex; flex-direction: column; gap: 10px;
     }
-
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 14px;
-    }
+    .info-row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
     .info-label { color: var(--muted); display: flex; align-items: center; gap: 6px; }
     .info-value { font-weight: 700; color: var(--text); }
-    .badge {
-      background: #dcfce7;
-      color: var(--green-dark);
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 20px;
-    }
-    .badge.warning { background: #fef9c3; color: #92400e; }
-
     .status-row {
-      background: #f9fafb;
-      border-radius: 10px;
-      padding: 12px;
-      display: flex;
-      justify-content: space-between;
+      background: #f9fafb; border-radius: 10px;
+      padding: 12px; display: flex; justify-content: space-between;
     }
     .status-item { text-align: center; }
     .status-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
@@ -140,120 +76,71 @@
     .status-val.green { color: var(--green); }
     .status-val.red { color: var(--red); }
     .status-val.gray { color: #9ca3af; }
-
-    /* Buttons */
-    .btn-group {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
+    .btn-group { display: flex; flex-direction: column; gap: 10px; }
     .btn {
-      width: 100%;
-      padding: 18px;
-      border: none;
-      border-radius: 14px;
-      font-size: 17px;
-      font-weight: 800;
-      font-family: 'Sarabun', sans-serif;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
+      width: 100%; padding: 18px; border: none; border-radius: 14px;
+      font-size: 17px; font-weight: 800; font-family: 'Sarabun', sans-serif;
+      cursor: pointer; transition: all 0.15s ease;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
     }
     .btn:active { transform: scale(0.97); }
-
     .btn-checkin {
       background: linear-gradient(135deg, var(--green), var(--green-dark));
-      color: white;
-      box-shadow: 0 4px 20px rgba(0,185,0,0.35);
+      color: white; box-shadow: 0 4px 20px rgba(0,185,0,0.35);
     }
     .btn-checkout {
       background: linear-gradient(135deg, var(--red), var(--red-dark));
-      color: white;
-      box-shadow: 0 4px 20px rgba(239,68,68,0.35);
+      color: white; box-shadow: 0 4px 20px rgba(239,68,68,0.35);
     }
     .btn:disabled {
-      background: #e5e7eb !important;
-      color: #9ca3af !important;
-      box-shadow: none !important;
-      cursor: not-allowed;
+      background: #e5e7eb !important; color: #9ca3af !important;
+      box-shadow: none !important; cursor: not-allowed;
     }
-
-    /* Success screen */
-    #success {
-      display: none;
-      text-align: center;
-      max-width: 380px;
-      width: 100%;
-    }
+    #success { display: none; text-align: center; max-width: 380px; width: 100%; }
     .success-icon {
       font-size: 72px;
       animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       margin-bottom: 16px;
     }
-    @keyframes pop {
-      from { transform: scale(0); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
+    @keyframes pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     .success-title { font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
-    .success-sub { font-size: 15px; color: var(--muted); }
-
-    /* Error */
-    #error-screen {
-      display: none;
-      text-align: center;
-      padding: 32px;
-    }
-
+    .success-sub { font-size: 15px; color: var(--muted); white-space: pre-line; }
+    #error-screen { display: none; text-align: center; padding: 32px; }
     .sunday-notice {
-      background: #fef9c3;
-      border: 1.5px solid #fde68a;
-      border-radius: 12px;
-      padding: 14px 16px;
-      font-size: 13px;
-      color: #92400e;
-      text-align: center;
+      background: #fef9c3; border: 1.5px solid #fde68a;
+      border-radius: 12px; padding: 14px 16px;
+      font-size: 13px; color: #92400e; text-align: center;
     }
-
-    .footer-note {
-      text-align: center;
-      font-size: 12px;
-      color: #9ca3af;
+    .footer-note { text-align: center; font-size: 12px; color: #9ca3af; }
+    .saved-badge {
+      background: #dcfce7; color: #166534;
+      font-size: 11px; font-weight: 700;
+      padding: 3px 10px; border-radius: 20px;
+      display: inline-block; margin-top: 4px;
     }
   </style>
 </head>
 <body>
 
-  <!-- Loading -->
   <div id="loading">
     <div class="spinner"></div>
     <p style="color:#6b7280;font-size:14px;">กำลังโหลด...</p>
   </div>
 
-  <!-- Main App -->
   <div id="app">
-
-    <!-- Header: user info -->
     <div class="header-card">
       <div class="avatar" id="avatarBox">👤</div>
       <div class="user-name" id="userName">กำลังโหลด...</div>
       <div class="user-sub">ระบบบันทึกเวลาเข้า-ออกงาน</div>
     </div>
-
-    <!-- Clock -->
     <div class="time-card">
       <div class="clock" id="clock">00:00:00</div>
       <div class="date-text" id="dateText"></div>
     </div>
-
-    <!-- Info -->
     <div class="info-card">
       <div class="info-row">
         <span class="info-label">📍 สถานที่</span>
-        <span class="info-value">เน่นอร์มาร์เก็ต</span>
+        <span class="info-value">สำนักงานใหญ่</span>
       </div>
       <div class="info-row">
         <span class="info-label">🕐 เวลางาน</span>
@@ -278,15 +165,12 @@
           <div class="status-val gray" id="otDisplay">–</div>
         </div>
       </div>
+      <div id="dbStatus" style="text-align:center"></div>
     </div>
-
-    <!-- Sunday notice -->
     <div class="sunday-notice" id="sundayNotice" style="display:none">
       🌞 วันนี้เป็นวันหยุด (อาทิตย์) ไม่สามารถ Check-in ได้
     </div>
-
-    <!-- Buttons -->
-    <div class="btn-group" id="btnGroup">
+    <div class="btn-group">
       <button class="btn btn-checkin" id="btnCheckin" onclick="doCheckIn()">
         ✅ Check-in เข้างาน
       </button>
@@ -294,18 +178,15 @@
         🔴 Check-out ออกงาน
       </button>
     </div>
-
     <div class="footer-note">ข้อมูลจะถูกบันทึกและส่งให้ HR อัตโนมัติ</div>
   </div>
 
-  <!-- Success screen -->
   <div id="success">
     <div class="success-icon" id="successIcon">✅</div>
     <div class="success-title" id="successTitle">บันทึกสำเร็จ!</div>
     <div class="success-sub" id="successSub"></div>
   </div>
 
-  <!-- Error screen -->
   <div id="error-screen">
     <div style="font-size:48px;margin-bottom:16px">⚠️</div>
     <div style="font-size:18px;font-weight:700;color:#1a1a1a;margin-bottom:8px">เกิดข้อผิดพลาด</div>
@@ -316,26 +197,22 @@
   const LIFF_ID = "2010083543-RboGnZ3t";
   const WORK_START = "08:00";
   const WORK_END = "18:00";
+  const SUPABASE_URL = "https://qtcverqtuocwszhswfom.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_hCtqvg6AXGduLGWkWK9FJQ_gkz53UnA";
 
-  let userId = "";
-  let userName = "";
-  let checkedIn = false;
-  let checkinTime = null;
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  let userId = "", userName = "", todayRecord = null;
 
-  // Clock
   function updateClock() {
     const now = new Date();
     const h = String(now.getHours()).padStart(2,'0');
     const m = String(now.getMinutes()).padStart(2,'0');
     const s = String(now.getSeconds()).padStart(2,'0');
     document.getElementById('clock').textContent = `${h}:${m}:${s}`;
-
     const days = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัส','ศุกร์','เสาร์'];
     const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
     document.getElementById('dateText').textContent =
       `วัน${days[now.getDay()]}ที่ ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()+543}`;
-
-    // Check if Sunday
     if (now.getDay() === 0) {
       document.getElementById('sundayNotice').style.display = 'block';
       document.getElementById('btnCheckin').disabled = true;
@@ -344,139 +221,97 @@
   setInterval(updateClock, 1000);
   updateClock();
 
-  // Init LIFF
-  async function initLiff() {
-    try {
-      await liff.init({ liffId: LIFF_ID });
-
-      if (!liff.isLoggedIn()) {
-        liff.login();
-        return;
-      }
-
-      const profile = await liff.getProfile();
-      userId = profile.userId;
-      userName = profile.displayName;
-
-      // Show user info
-      document.getElementById('userName').textContent = userName;
-      const avatarBox = document.getElementById('avatarBox');
-      if (profile.pictureUrl) {
-        avatarBox.innerHTML = `<img src="${profile.pictureUrl}" alt="avatar" />`;
-      } else {
-        avatarBox.textContent = userName[0] || '👤';
-      }
-
-      // Load today's record from localStorage (key per user per day)
-      const today = new Date().toISOString().slice(0,10);
-      const key = `checkin_${userId}_${today}`;
-      const saved = JSON.parse(localStorage.getItem(key) || '{}');
-
-      if (saved.checkinTime) {
-        checkedIn = true;
-        checkinTime = saved.checkinTime;
-        document.getElementById('checkinDisplay').textContent = saved.checkinTime;
-        document.getElementById('btnCheckin').disabled = true;
-        document.getElementById('btnCheckout').disabled = false;
-      }
-      if (saved.checkoutTime) {
-        document.getElementById('checkoutDisplay').textContent = saved.checkoutTime;
-        document.getElementById('btnCheckout').disabled = true;
-        document.getElementById('otDisplay').textContent = saved.ot || '–';
-      }
-
-      // Show app
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('app').style.display = 'flex';
-
-    } catch (err) {
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('error-screen').style.display = 'block';
-      document.getElementById('errorMsg').textContent = err.message || 'กรุณาเปิดผ่านแอปไลน์';
-    }
-  }
-
   function getNowTime() {
     const now = new Date();
     return String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
   }
+  function getToday() { return new Date().toISOString().slice(0,10); }
 
-  function calcOT(checkoutStr) {
-    // OT = minutes after 17:00
+  function calcOTMinutes(checkoutStr) {
     const [ch, cm] = checkoutStr.split(':').map(Number);
     const [eh, em] = WORK_END.split(':').map(Number);
-    const diffMin = (ch * 60 + cm) - (eh * 60 + em);
-    if (diffMin <= 0) return null;
-    const hrs = Math.floor(diffMin / 60);
-    const mins = diffMin % 60;
-    return hrs > 0 ? `${hrs} ชม. ${mins} นาที` : `${mins} นาที`;
+    const diff = (ch * 60 + cm) - (eh * 60 + em);
+    return diff > 15 ? diff : 0;
   }
-function isEarlyOT(checkinStr) {
-  const [ch, cm] = checkinStr.split(':').map(Number);
-  const [sh, sm] = WORK_START.split(':').map(Number);
-  return (ch * 60 + cm) < (sh * 60 + sm - 15);
-}
-  function isLate(checkinStr) {
-    const [ch, cm] = checkinStr.split(':').map(Number);
+  function formatOT(minutes) {
+    if (!minutes || minutes <= 0) return null;
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return h > 0 ? `${h} ชม. ${m} นาที` : `${m} นาที`;
+  }
+  function isLate(t) {
+    const [ch, cm] = t.split(':').map(Number);
     const [sh, sm] = WORK_START.split(':').map(Number);
-    return (ch * 60 + cm) > (sh * 60 + sm+15);
+    return (ch * 60 + cm) > (sh * 60 + sm + 15);
+  }
+  function isEarlyOT(t) {
+    const [ch, cm] = t.split(':').map(Number);
+    const [sh, sm] = WORK_START.split(':').map(Number);
+    return (ch * 60 + cm) < (sh * 60 + sm - 15);
+  }
+
+  async function loadTodayRecord() {
+    const { data } = await sb.from('checkins').select('*')
+      .eq('user_id', userId).eq('date', getToday()).single();
+    if (data) {
+      todayRecord = data;
+      if (data.checkin_time) {
+        const t = new Date(data.checkin_time);
+        document.getElementById('checkinDisplay').textContent =
+          String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0');
+        document.getElementById('btnCheckin').disabled = true;
+        document.getElementById('btnCheckout').disabled = false;
+      }
+      if (data.checkout_time) {
+        const t = new Date(data.checkout_time);
+        document.getElementById('checkoutDisplay').textContent =
+          String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0');
+        document.getElementById('btnCheckout').disabled = true;
+        document.getElementById('otDisplay').textContent = formatOT(data.ot_minutes) || '–';
+      }
+      document.getElementById('dbStatus').innerHTML = '<span class="saved-badge">☁️ ซิงค์กับ Database แล้ว</span>';
+    }
   }
 
   async function doCheckIn() {
-    const now = getNowTime();
-    checkinTime = now;
-    checkedIn = true;
-
-    // Save locally
-    const today = new Date().toISOString().slice(0,10);
-    const key = `checkin_${userId}_${today}`;
-    const record = { checkinTime: now };
-    localStorage.setItem(key, JSON.stringify(record));
-
-    // Update UI
-    document.getElementById('checkinDisplay').textContent = now;
     document.getElementById('btnCheckin').disabled = true;
+    const now = getNowTime();
+    const { data, error } = await sb.from('checkins').insert({
+      user_id: userId, user_name: userName,
+      checkin_time: new Date().toISOString(), date: getToday(),
+    }).select().single();
+    if (error) { alert('เกิดข้อผิดพลาด: ' + error.message); document.getElementById('btnCheckin').disabled = false; return; }
+    todayRecord = data;
+    document.getElementById('checkinDisplay').textContent = now;
     document.getElementById('btnCheckout').disabled = false;
-
-    // Send LINE message
-    const late = isLate(now);
+    document.getElementById('dbStatus').innerHTML = '<span class="saved-badge">☁️ บันทึกลง Database แล้ว</span>';
+    const late = isLate(now); const earlyOT = isEarlyOT(now);
     try {
-      await liff.sendMessages([{
-        type: 'text',
-        text: `✅ Check-in สำเร็จ!\n👤 ${userName}\n🕐 เวลา: ${now} น.\n📅 ${document.getElementById('dateText').textContent}${late ? '\n⚠️ มาสายจากกำหนด 08:00 น.' : '\n✨ มาตรงเวลา!'}`
+      await liff.sendMessages([{ type: 'text',
+        text: `✅ Check-in สำเร็จ!\n👤 ${userName}\n🕐 เวลา: ${now} น.\n📅 ${document.getElementById('dateText').textContent}${late ? '\n⚠️ มาสายจาก 08:15 น.' : earlyOT ? '\n⏱️ OT ก่อนเวลา (ก่อน 07:45)' : '\n✨ มาตรงเวลา!'}\n☁️ บันทึกแล้ว`
       }]);
     } catch(e) {}
-
-    // Show success briefly
-    showSuccess('✅', 'Check-in สำเร็จ!', `เวลา ${now} น.${late ? '\n⚠️ มาสายจาก 08:15 น.' : ''}`);
+    showSuccess('✅', 'Check-in สำเร็จ!', `เวลา ${now} น.\n☁️ บันทึกลง Database แล้ว`);
   }
 
   async function doCheckOut() {
-    const now = getNowTime();
-    const ot = calcOT(now);
-
-    // Save locally
-    const today = new Date().toISOString().slice(0,10);
-    const key = `checkin_${userId}_${today}`;
-    const existing = JSON.parse(localStorage.getItem(key) || '{}');
-    existing.checkoutTime = now;
-    existing.ot = ot || '–';
-    localStorage.setItem(key, JSON.stringify(existing));
-
-    // Update UI
-    document.getElementById('checkoutDisplay').textContent = now;
-    document.getElementById('otDisplay').textContent = ot || '–';
     document.getElementById('btnCheckout').disabled = true;
-
-    // Send LINE message
+    const now = getNowTime();
+    const otMin = calcOTMinutes(now);
+    const { error } = await sb.from('checkins').update({
+      checkout_time: new Date().toISOString(), ot_minutes: otMin,
+    }).eq('id', todayRecord.id);
+    if (error) { alert('เกิดข้อผิดพลาด: ' + error.message); document.getElementById('btnCheckout').disabled = false; return; }
+    document.getElementById('checkoutDisplay').textContent = now;
+    document.getElementById('otDisplay').textContent = formatOT(otMin) || '–';
+    document.getElementById('dbStatus').innerHTML = '<span class="saved-badge">☁️ บันทึกลง Database แล้ว</span>';
+    const otText = formatOT(otMin);
     try {
-      await liff.sendMessages([{
-        type: 'text',
-        text: `🔴 Check-out สำเร็จ!\n👤 ${userName}\n🕐 เวลา: ${now} น.\n📅 ${document.getElementById('dateText').textContent}${ot ? `\n⏱️ OT วันนี้: ${ot}` : '\n✅ ไม่มี OT'}`
+      await liff.sendMessages([{ type: 'text',
+        text: `🔴 Check-out สำเร็จ!\n👤 ${userName}\n🕐 เวลา: ${now} น.\n📅 ${document.getElementById('dateText').textContent}${otText ? `\n⏱️ OT วันนี้: ${otText}` : '\n✅ ไม่มี OT'}\n☁️ บันทึกแล้ว`
       }]);
     } catch(e) {}
-
-    showSuccess('🏠', 'Check-out สำเร็จ!', `เวลา ${now} น.${ot ? `\nOT วันนี้: ${ot}` : ''}`);
+    showSuccess('🏠', 'Check-out สำเร็จ!', `เวลา ${now} น.${otText ? `\nOT: ${otText}` : ''}\n☁️ บันทึกลง Database แล้ว`);
   }
 
   function showSuccess(icon, title, sub) {
@@ -485,10 +320,27 @@ function isEarlyOT(checkinStr) {
     document.getElementById('successIcon').textContent = icon;
     document.getElementById('successTitle').textContent = title;
     document.getElementById('successSub').textContent = sub;
+    setTimeout(() => { liff.closeWindow(); }, 3000);
+  }
 
-    setTimeout(() => {
-      liff.closeWindow();
-    }, 2500);
+  async function initLiff() {
+    try {
+      await liff.init({ liffId: LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+      const profile = await liff.getProfile();
+      userId = profile.userId; userName = profile.displayName;
+      document.getElementById('userName').textContent = userName;
+      if (profile.pictureUrl) {
+        document.getElementById('avatarBox').innerHTML = `<img src="${profile.pictureUrl}" alt="avatar" />`;
+      }
+      await loadTodayRecord();
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+    } catch(err) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error-screen').style.display = 'block';
+      document.getElementById('errorMsg').textContent = err.message || 'กรุณาเปิดผ่านแอปไลน์';
+    }
   }
 
   initLiff();
