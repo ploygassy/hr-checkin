@@ -314,6 +314,8 @@
 
 <script>
   const LIFF_ID = "2010083543-RboGnZ3t";
+  const LINE_TOKEN = "rVPBnXN5a0+y30OL0i0xAbWNlHmWrWk+DmhmLZX0AbsiVcIdG2WCmTuYOEDN5NTIyKm8yZvU+GDMhC0f0mkbkterYLFaHbEaSiioLzSgIfDs0BSrtMEbBz4gxji5NzGUEr6Wwdd9X+1Hodc+A6G4UgdB04t89/1O/w1cDnyilFU=";
+const ADMIN_ID = "U34c53af4e342b11ed5f6a5891b10ac18";
   const WORK_START = "08:00";
   const WORK_END = "17:00";
 
@@ -321,6 +323,21 @@
   let userName = "";
   let checkedIn = false;
   let checkinTime = null;
+  async function notifyAdmin(msg) {
+  try {
+    await fetch("https://api.line.me/v2/bot/message/push", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + LINE_TOKEN
+      },
+      body: JSON.stringify({
+        to: ADMIN_ID,
+        messages: [{ type: "text", text: msg }]
+      })
+    });
+  } catch(e) {}
+}
 
   // Clock
   function updateClock() {
@@ -444,6 +461,7 @@
     } catch(e) {}
 
     // Show success briefly
+    notifyAdmin(`🔔 Check-in\n👤 ${userName}\n🕐 ${now} น.\n📅 ${document.getElementById('dateText').textContent}${late ? '\n⚠️ มาสาย' : ''}`);
     showSuccess('✅', 'Check-in สำเร็จ!', `เวลา ${now} น.${late ? '\n⚠️ มาสายจาก 08:00 น.' : ''}`);
   }
 
@@ -472,6 +490,7 @@
       }]);
     } catch(e) {}
 
+    notifyAdmin(`🔔 Check-out\n👤 ${userName}\n🕐 ${now} น.\n📅 ${document.getElementById('dateText').textContent}${otText ? `\n⏱️ OT: ${otText}` : ''}`);
     showSuccess('🏠', 'Check-out สำเร็จ!', `เวลา ${now} น.${ot ? `\nOT วันนี้: ${ot}` : ''}`);
   }
 
