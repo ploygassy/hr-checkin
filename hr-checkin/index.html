@@ -53,7 +53,6 @@
 </head>
 <body>
   <div id="loading"><div class="spinner"></div><p style="color:#6b7280;font-size:14px;">กำลังโหลด...</p></div>
-
   <div id="app">
     <div class="header-card">
       <div class="avatar" id="avatarBox">👤</div>
@@ -65,7 +64,7 @@
       <div class="date-text" id="dateText"></div>
     </div>
     <div class="info-card">
-      <div class="info-row"><span class="info-label">📍 สถานที่</span><span class="info-value">สำนักงานใหญ่</span></div>
+      <div class="info-row"><span class="info-label">📍 สถานที่</span><span class="info-value">เน่นอร์มาร์เก็ต</span></div>
       <div class="info-row"><span class="info-label">🕐 เวลางาน</span><span class="info-value">08:00 – 18:00 น.</span></div>
       <div class="info-row"><span class="info-label">📅 วันหยุด</span><span class="info-value">วันอาทิตย์</span></div>
       <hr style="border:none;border-top:1px solid #f0f0f0"/>
@@ -83,28 +82,23 @@
     </div>
     <div class="footer-note">ข้อมูลจะถูกบันทึกและส่งให้ HR อัตโนมัติ</div>
   </div>
-
   <div id="success">
     <div class="success-icon" id="successIcon">✅</div>
     <div class="success-title" id="successTitle">บันทึกสำเร็จ!</div>
     <div class="success-sub" id="successSub"></div>
   </div>
-
   <div id="error-screen">
     <div style="font-size:48px;margin-bottom:16px">⚠️</div>
     <div style="font-size:18px;font-weight:700;color:#1a1a1a;margin-bottom:8px">เกิดข้อผิดพลาด</div>
     <div style="font-size:14px;color:#6b7280" id="errorMsg">กรุณาเปิดผ่านแอปไลน์</div>
   </div>
-
 <script>
-  // ===== ตั้งค่า =====
   const LIFF_ID = "2010083543-RboGnZ3t";
   const WORK_START = "08:00";
   const WORK_END = "18:00";
   const SUPABASE_URL = "https://qtcverqtuocwszhswfom.supabase.co";
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0Y3ZlcnF0dW9jd3N6aHN3Zm9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3MzkxNjAsImV4cCI6MjA5NDMxNTE2MH0.IrMc9v1b1qyYl5stp7Ll_0JCn3zboTuAmwtAH0bhB5Y";
   const NOTIFY_URL = "https://qtcverqtuocwszhswfom.supabase.co/functions/v1/notify-admin";
-  // ===================
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   let userId = "", userName = "", todayRecord = null;
@@ -121,37 +115,35 @@
   setInterval(updateClock,1000);updateClock();
 
   function getNowTime(){const n=new Date();return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')}
-  function getToday(){return new Date().toISOString().slice(0,10)}
-
-  function calcOTMinutes(t){
-    const[ch,cm]=t.split(':').map(Number);
-    const[eh,em]=WORK_END.split(':').map(Number);
-    const diff=(ch*60+cm)-(eh*60+em);
-    return diff>15?diff:0;
-  }
-  function formatOT(m){
-    if(!m||m<=0)return null;
-    const h=Math.floor(m/60),mn=m%60;
-    return h>0?`${h} ชม. ${mn} นาที`:`${mn} นาที`;
-  }
+  function getToday(){const n=new Date();const b=new Date(n.toLocaleString("en-US",{timeZone:"Asia/Bangkok"}));return b.getFullYear()+'-'+String(b.getMonth()+1).padStart(2,'0')+'-'+String(b.getDate()).padStart(2,'0')}
+  function calcOTMinutes(t){const[ch,cm]=t.split(':').map(Number);const[eh,em]=WORK_END.split(':').map(Number);const diff=(ch*60+cm)-(eh*60+em);return diff>15?diff:0}
+  function formatOT(m){if(!m||m<=0)return null;const h=Math.floor(m/60),mn=m%60;return h>0?`${h} ชม. ${mn} นาที`:`${mn} นาที`}
   function isLate(t){const[ch,cm]=t.split(':').map(Number);const[sh,sm]=WORK_START.split(':').map(Number);return(ch*60+cm)>(sh*60+sm+15)}
   function isEarlyOT(t){const[ch,cm]=t.split(':').map(Number);const[sh,sm]=WORK_START.split(':').map(Number);return(ch*60+cm)<(sh*60+sm-15)}
 
   async function notifyAdmin(type, time, ot, late) {
     try {
-      await fetch(NOTIFY_URL, {
+      const res = await fetch(NOTIFY_URL, {
         method: "POST",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({
-          userName, time, type, ot: ot||null, late: late||false,
+          userName: userName,
+          time: time,
+          type: type,
+          ot: ot || null,
+          late: late || false,
           date: document.getElementById('dateText').textContent
         })
       });
-    } catch(e) {}
+      console.log("notify result:", res.status);
+    } catch(e) {
+      console.log("notify error:", e);
+    }
   }
 
   async function loadTodayRecord() {
-    const {data} = await sb.from('checkins').select('*').eq('user_id',userId).eq('date',getToday()).single();
+    const today = getToday();
+    const {data} = await sb.from('checkins').select('*').eq('user_id',userId).eq('date',today).single();
     if(data){
       todayRecord=data;
       if(data.checkin_time){
@@ -175,14 +167,26 @@
     const now=getNowTime();
     const late=isLate(now);
     const earlyOT=isEarlyOT(now);
-    const {data,error}=await sb.from('checkins').insert({user_id:userId,user_name:userName,checkin_time:new Date().toISOString(),date:getToday()}).select().single();
-    if(error){alert('เกิดข้อผิดพลาด: '+error.message);document.getElementById('btnCheckin').disabled=false;return;}
+    const {data,error}=await sb.from('checkins').insert({
+      user_id:userId,user_name:userName,
+      checkin_time:new Date().toISOString(),
+      date:getToday()
+    }).select().single();
+    if(error){
+      alert('เกิดข้อผิดพลาด: '+error.message);
+      document.getElementById('btnCheckin').disabled=false;
+      return;
+    }
     todayRecord=data;
     document.getElementById('checkinDisplay').textContent=now;
     document.getElementById('btnCheckout').disabled=false;
     document.getElementById('dbStatus').innerHTML='<span class="saved-badge">☁️ บันทึกลง Database แล้ว</span>';
-    notifyAdmin("checkin", now, null, late);
-    try{await liff.sendMessages([{type:'text',text:`✅ Check-in สำเร็จ!\n👤 ${userName}\n🕐 ${now} น.\n📅 ${document.getElementById('dateText').textContent}${late?'\n⚠️ มาสาย':earlyOT?'\n⏱️ OT ก่อนเวลา':'\n✨ มาตรงเวลา!'}\n☁️ บันทึกแล้ว`}]);}catch(e){}
+    await notifyAdmin("checkin", now, null, late);
+    try{
+      await liff.sendMessages([{type:'text',
+        text:`✅ Check-in สำเร็จ!\n👤 ${userName}\n🕐 ${now} น.\n📅 ${document.getElementById('dateText').textContent}${late?'\n⚠️ มาสาย':earlyOT?'\n⏱️ OT ก่อนเวลา':'\n✨ มาตรงเวลา!'}\n☁️ บันทึกแล้ว`
+      }]);
+    }catch(e){}
     showSuccess('✅','Check-in สำเร็จ!',`เวลา ${now} น.\n☁️ บันทึกลง Database แล้ว`);
   }
 
@@ -191,13 +195,24 @@
     const now=getNowTime();
     const otMin=calcOTMinutes(now);
     const otText=formatOT(otMin);
-    const {error}=await sb.from('checkins').update({checkout_time:new Date().toISOString(),ot_minutes:otMin}).eq('id',todayRecord.id);
-    if(error){alert('เกิดข้อผิดพลาด: '+error.message);document.getElementById('btnCheckout').disabled=false;return;}
+    const {error}=await sb.from('checkins').update({
+      checkout_time:new Date().toISOString(),
+      ot_minutes:otMin
+    }).eq('id',todayRecord.id);
+    if(error){
+      alert('เกิดข้อผิดพลาด: '+error.message);
+      document.getElementById('btnCheckout').disabled=false;
+      return;
+    }
     document.getElementById('checkoutDisplay').textContent=now;
     document.getElementById('otDisplay').textContent=otText||'–';
     document.getElementById('dbStatus').innerHTML='<span class="saved-badge">☁️ บันทึกลง Database แล้ว</span>';
-    notifyAdmin("checkout", now, otText, false);
-    try{await liff.sendMessages([{type:'text',text:`🔴 Check-out สำเร็จ!\n👤 ${userName}\n🕐 ${now} น.\n📅 ${document.getElementById('dateText').textContent}${otText?`\n⏱️ OT: ${otText}`:'\n✅ ไม่มี OT'}\n☁️ บันทึกแล้ว`}]);}catch(e){}
+    await notifyAdmin("checkout", now, otText, false);
+    try{
+      await liff.sendMessages([{type:'text',
+        text:`🔴 Check-out สำเร็จ!\n👤 ${userName}\n🕐 ${now} น.\n📅 ${document.getElementById('dateText').textContent}${otText?`\n⏱️ OT: ${otText}`:'\n✅ ไม่มี OT'}\n☁️ บันทึกแล้ว`
+      }]);
+    }catch(e){}
     showSuccess('🏠','Check-out สำเร็จ!',`เวลา ${now} น.${otText?`\nOT: ${otText}`:''}\n☁️ บันทึกลง Database แล้ว`);
   }
 
@@ -215,9 +230,12 @@
       await liff.init({liffId:LIFF_ID});
       if(!liff.isLoggedIn()){liff.login();return;}
       const profile=await liff.getProfile();
-      userId=profile.userId;userName=profile.displayName;
+      userId=profile.userId;
+      userName=profile.displayName;
       document.getElementById('userName').textContent=userName;
-      if(profile.pictureUrl){document.getElementById('avatarBox').innerHTML=`<img src="${profile.pictureUrl}" alt="avatar"/>`;}
+      if(profile.pictureUrl){
+        document.getElementById('avatarBox').innerHTML=`<img src="${profile.pictureUrl}" alt="avatar"/>`;
+      }
       await loadTodayRecord();
       document.getElementById('loading').style.display='none';
       document.getElementById('app').style.display='flex';
