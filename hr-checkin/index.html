@@ -167,11 +167,11 @@
     const now=getNowTime();
     const late=isLate(now);
     const earlyOT=isEarlyOT(now);
-    const {data,error}=await sb.from('checkins').insert({
-      user_id:userId,user_name:userName,
-      checkin_time:new Date().toISOString(),
-      date:getToday()
-    }).select().single();
+const {data,error}=await sb.from('checkins').upsert({
+  user_id:userId,user_name:userName,
+  checkin_time:new Date().toISOString(),
+  date:getToday()
+},{onConflict:'user_id,date'}).select().single();
     if(error){
       alert('เกิดข้อผิดพลาด: '+error.message);
       document.getElementById('btnCheckin').disabled=false;
