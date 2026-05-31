@@ -2,11 +2,15 @@
   "version": 2,
   "builds": [
     {
-      "src": "hr-checkin/index.html",
+      "src": "hr-checkin/*.html",
       "use": "@vercel/static"
     }
   ],
   "routes": [
+    {
+      "src": "/admin2.html",
+      "dest": "/hr-checkin/admin2.html"
+    },
     {
       "src": "/(.*)",
       "dest": "/hr-checkin/index.html"
