@@ -110,7 +110,6 @@
     const days=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัส','ศุกร์','เสาร์'];
     const months=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
     document.getElementById('dateText').textContent=`วัน${days[now.getDay()]}ที่ ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()+543}`;
-    if(now.getDay()===0){document.getElementById('sundayNotice').style.display='block';document.getElementById('btnCheckin').disabled=true;}
   }
   setInterval(updateClock,1000);updateClock();
 
