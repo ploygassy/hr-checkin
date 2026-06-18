@@ -90,7 +90,7 @@
       <button class="btn btn-checkin" id="btnCheckin" onclick="doCheckIn()" disabled>✅ Check-in เข้างาน</button>
       <button class="btn btn-checkout" id="btnCheckout" onclick="doCheckOut()" disabled>🔴 Check-out ออกงาน</button>
     </div>
-    <div class="footer-note">ต้องต่อ WiFi ร้านและอยู่ในร้านเท่านั้น</div>
+    <div class="footer-note">ต้องอยู่ในร้านเน่นอร์มาร์เก็ตเท่านั้น</div>
   </div>
 
   <div id="success">
@@ -116,7 +116,6 @@
   const SHOP_LAT = 17.6360381;
   const SHOP_LNG = 104.1267423;
   const MAX_DISTANCE = 200;
-  const SHOP_IP = "49.228.168.153";
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   let userId = "", userName = "", todayRecord = null, locationOK = false;
@@ -127,14 +126,6 @@
     const dLng = (lng2-lng1) * Math.PI/180;
     const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  }
-
-  async function checkIP() {
-    try {
-      const res = await fetch('https://api.ipify.org?format=json');
-      const data = await res.json();
-      return data.ip === SHOP_IP;
-    } catch(e) { return false; }
   }
 
   function checkLocation() {
@@ -153,27 +144,17 @@
         const dist = getDistance(pos.coords.latitude, pos.coords.longitude, SHOP_LAT, SHOP_LNG);
         const distRounded = Math.round(dist);
 
-        if (dist > MAX_DISTANCE) {
+        if (dist <= MAX_DISTANCE) {
+          locationOK = true;
+          card.className = 'location-card ok';
+          card.textContent = `✅ อยู่ในร้าน (ห่าง ${distRounded} ม.)`;
+          updateButtons();
+        } else {
           locationOK = false;
           card.className = 'location-card fail';
-          card.textContent = `❌ อยู่นอกร้าน (ห่าง ${distRounded} ม.)`;
+          card.textContent = `❌ อยู่นอกร้าน (ห่าง ${distRounded} ม.) ต้องอยู่ในรัศมี ${MAX_DISTANCE} ม.`;
           document.getElementById('btnCheckin').disabled = true;
-          return;
         }
-
-        const ipOK = await checkIP();
-        if (!ipOK) {
-          locationOK = false;
-          card.className = 'location-card fail';
-          card.textContent = '❌ กรุณาต่อ WiFi ของร้านก่อน Check-in';
-          document.getElementById('btnCheckin').disabled = true;
-          return;
-        }
-
-        locationOK = true;
-        card.className = 'location-card ok';
-        card.textContent = `✅ อยู่ในร้าน (ห่าง ${distRounded} ม.)`;
-        updateButtons();
       },
       (err) => {
         card.className = 'location-card fail';
