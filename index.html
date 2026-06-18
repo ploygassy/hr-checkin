@@ -222,7 +222,7 @@
   }
 
   async function doCheckIn() {
-    if (!locationOK) { alert('❌ คุณไม่อยู่ในร้าน หรือยังไม่ต่อ WiFi ร้าน'); return; }
+    if (!locationOK) { alert('❌ คุณอยู่นอกร้าน ไม่สามารถ Check-in ได้ครับ'); return; }
     document.getElementById('btnCheckin').disabled=true;
     const now=getNowTime();
     const late=isLate(now);
